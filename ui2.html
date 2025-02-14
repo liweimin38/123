@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件加密与Base64工具</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --hover-color: #357abd;
+            --active-color: #2a5f8a;
+            --error-color: #ff6b6b;
+            --success-color: #4caf50;
+            --background-gradient: linear-gradient(135deg, #f0f4f8, #d9e2ec);
+            --card-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 2rem;
+            background: var(--background-gradient);
+            color: #2d3748;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 2.5rem;
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 2rem;
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+        }
+
+        .section {
+            margin-bottom: 2.5rem;
+            padding: 1.5rem;
+            border-radius: 12px;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+        }
+
+        h2 {
+            color: var(--primary-color);
+            margin: 0 0 1.5rem;
+            font-size: 1.375rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        h2::before {
+            content: "";
+            width: 24px;
+            height: 24px;
+            background: var(--primary-color);
+            mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22ZM12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20ZM11 7H13V9H11V7ZM11 11H13V17H11V11Z' fill='currentColor'/%3E%3C/svg%3E");
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            margin: 1rem 0;
+            padding: 1rem;
+            font-size: 0.9375rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            resize: none;
+            transition: all 0.2s ease;
+            background-color: #fff;
+            overflow: hidden;
+        }
+
+        textarea:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.15);
+        }
+
+        .input-hint {
+            font-size: 0.875rem;
+            color: #718096;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        .input-hint.visible {
+            display: block;
+        }
+
+        .char-counter {
+            font-size: 0.75rem;
+            color: #718096;
+            text-align: right;
+            margin-top: 0.5rem;
+        }
+
+        .validation-message {
+            font-size: 0.875rem;
+            color: var(--error-color);
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        .validation-message.visible {
+            display: block;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        button {
+            padding: 0.875rem 1.5rem;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--primary-color);
+            color: white;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        button:hover {
+            background-color: var(--hover-color);
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            background-color: var(--active-color);
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            background-color: #e2e8f0;
+            color: #718096;
+        }
+
+        .file-input {
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+        }
+
+        .file-input input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .output {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background-color: #fff;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .status {
+            margin: 1rem 0;
+            padding: 0.875rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: none;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .status.visible {
+            display: flex;
+        }
+
+        .status.loading {
+            background-color: rgba(74, 144, 226, 0.1);
+            color: var(--primary-color);
+        }
+
+        .status.error {
+            background-color: rgba(255, 107, 107, 0.1);
+            color: var(--error-color);
+        }
+
+        .status.success {
+            background-color: rgba(76, 175, 80, 0.1);
+            color: var(--success-color);
+        }
+
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(74, 144, 226, 0.2);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 1.5rem;
+            }
+
+            h1 {
+                font-size: 1.75rem;
+            }
+
+            .section {
+                padding: 1rem;
+            }
+
+            textarea {
+                font-size: 0.875rem;
+            }
+
+            button {
+                font-size: 0.875rem;
+                padding: 0.75rem 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>文件加密与Base64工具</h1>
+
+        <div class="section">
+            <h2>文件加密下载</h2>
+            <textarea id="fileContent" placeholder="输入要加密的内容..."></textarea>
+            <div class="input-hint" id="fileContentHint">请输入要加密的文本内容，支持多行输入。</div>
+            <div class="char-counter" id="fileContentCounter">剩余字符数: 1000</div>
+            <div class="validation-message" id="fileContentValidation"></div>
+            <div class="button-group">
+                <button id="encryptDownloadBtn">
+                    <span class="spinner" style="display: none;"></span>
+                    加密并下载
+                </button>
+                <div class="file-input">
+                    <button id="decryptUploadBtn">
+                        <span class="spinner" style="display: none;"></span>
+                        上传并解密
+                    </button>
+                    <input type="file" id="fileUpload" accept=".txt">
+                </div>
+            </div>
+            <div class="output" id="fileOutput"></div>
+            <div id="fileStatus" class="status"></div>
+        </div>
+
+        <div class="section">
+            <h2>Base64工具</h2>
+            <textarea id="inputText" placeholder="输入要编码/解码的文本..."></textarea>
+            <div class="input-hint" id="inputTextHint">请输入要编码或解码的文本内容。</div>
+            <div class="char-counter" id="inputTextCounter">剩余字符数: 1000</div>
+            <div class="validation-message" id="inputTextValidation"></div>
+            <div class="button-group">
+                <button id="encodeBtn">编码</button>
+                <button id="decodeBtn">解码</button>
+            </div>
+            <div class="output" id="base64Output"></div>
+            <div id="base64Status" class="status"></div>
+        </div>
+    </div>
+
+    <script>
+        const utils = {
+            showStatus(element, message, type) {
+                element.textContent = message;
+                element.className = `status visible ${type}`;
+                setTimeout(() => element.classList.remove('visible'), 3000);
+            },
+            toggleButtonLoading(button, isLoading) {
+                const spinner = button.querySelector('.spinner');
+                button.disabled = isLoading;
+                spinner.style.display = isLoading ? 'inline-block' : 'none';
+            },
+            adjustTextareaHeight(textarea) {
+                textarea.style.height = 'auto';
+                textarea.style.height = `${textarea.scrollHeight}px`;
+            },
+            updateCharCounter(textarea, counter, maxLength) {
+                const remaining = maxLength - textarea.value.length;
+                counter.textContent = `剩余字符数: ${remaining}`;
+                if (remaining < 0) {
+                    counter.style.color = 'var(--error-color)';
+                } else {
+                    counter.style.color = '#718096';
+                }
+            }
+        };
+
+        // 文件加密模块
+        (() => {
+            const encryptDownloadBtn = document.getElementById('encryptDownloadBtn');
+            const decryptUploadBtn = document.getElementById('decryptUploadBtn');
+            const fileUpload = document.getElementById('fileUpload');
+            const fileContent = document.getElementById('fileContent');
+            const fileOutput = document.getElementById('fileOutput');
+            const fileStatus = document.getElementById('fileStatus');
+            const fileContentHint = document.getElementById('fileContentHint');
+            const fileContentCounter = document.getElementById('fileContentCounter');
+            const fileContentValidation = document.getElementById('fileContentValidation');
+
+            const maxLength = 1000;
+
+            fileContent.addEventListener('input', () => {
+                utils.adjustTextareaHeight(fileContent);
+                utils.updateCharCounter(fileContent, fileContentCounter, maxLength);
+                if (fileContent.value.trim()) {
+                    fileContentHint.classList.add('visible');
+                } else {
+                    fileContentHint.classList.remove('visible');
+                }
+                if (fileContent.value.length > maxLength) {
+                    fileContentValidation.textContent = '输入内容超出字符限制！';
+                    fileContentValidation.classList.add('visible');
+                } else {
+                    fileContentValidation.classList.remove('visible');
+                }
+                encryptDownloadBtn.disabled = fileContent.value.length === 0 || fileContent.value.length > maxLength;
+            });
+
+            const encrypt = (text) => btoa(unescape(encodeURIComponent(text)));
+            const decrypt = (base64) => decodeURIComponent(escape(atob(base64)));
+
+            encryptDownloadBtn.addEventListener('click', async () => {
+                const content = fileContent.value.trim();
+                if (!content) {
+                    utils.showStatus(fileStatus, '请输入要加密的内容！', 'error');
+                    return;
+                }
+                if (content.length > maxLength) {
+                    utils.showStatus(fileStatus, '输入内容超出字符限制！', 'error');
+                    return;
+                }
+
+                utils.toggleButtonLoading(encryptDownloadBtn, true);
+                try {
+                    const blob = new Blob([encrypt(content)], { type: 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `encrypted_${Date.now()}.txt`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    
+                    fileOutput.textContent = '加密内容: ' + encrypt(content);
+                    utils.showStatus(fileStatus, '✅ 文件已加密下载！', 'success');
+                } catch (error) {
+                    utils.showStatus(fileStatus, `❌ 加密失败: ${error.message}`, 'error');
+                } finally {
+                    utils.toggleButtonLoading(encryptDownloadBtn, false);
+                }
+            });
+
+            fileUpload.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                utils.toggleButtonLoading(decryptUploadBtn, true);
+                try {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        try {
+                            const decrypted = decrypt(reader.result);
+                            fileOutput.textContent = '解密内容: ' + decrypted;
+                            utils.showStatus(fileStatus, '✅ 文件解密成功！', 'success');
+                        } catch (error) {
+                            utils.showStatus(fileStatus, '❌ 解密失败: 文件格式错误', 'error');
+                        }
+                    };
+                    reader.readAsText(file);
+                } catch (error) {
+                    utils.showStatus(fileStatus, `❌ 上传失败: ${error.message}`, 'error');
+                } finally {
+                    utils.toggleButtonLoading(decryptUploadBtn, false);
+                }
+            });
+        })();
+
+        // Base64工具模块
+        (() => {
+            const encodeBtn = document.getElementById('encodeBtn');
+            const decodeBtn = document.getElementById('decodeBtn');
+            const inputText = document.getElementById('inputText');
+            const base64Output = document.getElementById('base64Output');
+            const base64Status = document.getElementById('base64Status');
+            const inputTextHint = document.getElementById('inputTextHint');
+            const inputTextCounter = document.getElementById('inputTextCounter');
+            const inputTextValidation = document.getElementById('inputTextValidation');
+
+            const maxLength = 1000;
+
+            inputText.addEventListener('input', () => {
+                utils.adjustTextareaHeight(inputText);
+                utils.updateCharCounter(inputText, inputTextCounter, maxLength);
+                if (inputText.value.trim()) {
+                    inputTextHint.classList.add('visible');
+                } else {
+                    inputTextHint.classList.remove('visible');
+                }
+                if (inputText.value.length > maxLength) {
+                    inputTextValidation.textContent = '输入内容超出字符限制！';
+                    inputTextValidation.classList.add('visible');
+                } else {
+                    inputTextValidation.classList.remove('visible');
+                }
+                encodeBtn.disabled = inputText.value.length === 0 || inputText.value.length > maxLength;
+                decodeBtn.disabled = inputText.value.length === 0 || inputText.value.length > maxLength;
+            });
+
+            encodeBtn.addEventListener('click', () => {
+                const text = inputText.value.trim();
+                if (!text) {
+                    utils.showStatus(base64Status, '请输入要编码的文本！', 'error');
+                    return;
+                }
+                if (text.length > maxLength) {
+                    utils.showStatus(base64Status, '输入内容超出字符限制！', 'error');
+                    return;
+                }
+                try {
+                    base64Output.textContent = btoa(unescape(encodeURIComponent(text)));
+                    utils.showStatus(base64Status, '编码成功！', 'success');
+                } catch (error) {
+                    utils.showStatus(base64Status, `编码失败: ${error.message}`, 'error');
+                }
+            });
+
+            decodeBtn.addEventListener('click', () => {
+                const text = inputText.value.trim();
+                if (!text) {
+                    utils.showStatus(base64Status, '请输入要解码的文本！', 'error');
+                    return;
+                }
+                if (text.length > maxLength) {
+                    utils.showStatus(base64Status, '输入内容超出字符限制！', 'error');
+                    return;
+                }
+                try {
+                    base64Output.textContent = decodeURIComponent(escape(atob(text)));
+                    utils.showStatus(base64Status, '解码成功！', 'success');
+                } catch (error) {
+                    utils.showStatus(base64Status, `解码失败: 无效的Base64格式`, 'error');
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
